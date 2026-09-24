@@ -12,3 +12,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(recorder_simulator
     apps/recorder_simulator/main.cpp
 )
+
+target_include_directories(recorder_simulator
+    PRIVATE
+    include
+)
