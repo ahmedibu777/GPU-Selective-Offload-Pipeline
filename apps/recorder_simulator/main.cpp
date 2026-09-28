@@ -40,7 +40,7 @@ int main() {
     frame.height = kHeight;
     frame.data_size = test_buffer.size() * sizeof(float);
     frame.data_ptr = test_buffer.data();
-    frame.priority = kDefaultPriority + 72;
+    frame.priority = 200;
     frame.confidence = 250;
 
     const bool frame_valid =

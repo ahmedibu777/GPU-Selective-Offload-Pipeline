@@ -1,15 +1,28 @@
 #include <array>
-#include <cassert>
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 #include "offload/common/constants.hpp"
 #include "offload/common/errors.hpp"
 #include "offload/common/types.hpp"
 
+namespace {
+
+bool check(bool condition, const char* message) {
+    if (!condition) {
+        std::cerr << "FAIL: " << message << '\n';
+    }
+    return condition;
+}
+
+}  // namespace
+
 int main() {
     using namespace offload;
     using namespace offload::constants;
+
+    bool ok = true;
 
     static_assert(static_cast<std::uint8_t>(SensorType::Camera) == 0);
     static_assert(static_cast<std::uint8_t>(SensorType::Lidar) == 1);
@@ -21,14 +34,14 @@ int main() {
     static_assert(static_cast<std::uint8_t>(EventType::ProcessingComplete) == 2);
 
     Frame defaults;
-    assert(defaults.timestamp == 0);
-    assert(defaults.sensor_type == SensorType::Camera);
-    assert(defaults.width == 0);
-    assert(defaults.height == 0);
-    assert(defaults.data_size == 0);
-    assert(defaults.data_ptr == nullptr);
-    assert(defaults.priority == kDefaultPriority);
-    assert(defaults.confidence == kDefaultConfidence);
+    ok &= check(defaults.timestamp == 0, "Frame timestamp default");
+    ok &= check(defaults.sensor_type == SensorType::Camera, "Frame sensor default");
+    ok &= check(defaults.width == 0, "Frame width default");
+    ok &= check(defaults.height == 0, "Frame height default");
+    ok &= check(defaults.data_size == 0, "Frame data_size default");
+    ok &= check(defaults.data_ptr == nullptr, "Frame data_ptr default");
+    ok &= check(defaults.priority == kDefaultPriority, "Frame priority default");
+    ok &= check(defaults.confidence == kDefaultConfidence, "Frame confidence default");
 
     std::array<float, 4> buffer{1.0F, 2.0F, 3.0F, 4.0F};
 
@@ -42,13 +55,13 @@ int main() {
     frame.priority = kMaxPriority;
     frame.confidence = kMaxConfidence;
 
-    assert(frame.timestamp == 123456789ULL);
-    assert(frame.data_ptr == buffer.data());
-    assert(frame.data_size == sizeof(buffer));
-    assert(frame.priority == 255);
-    assert(frame.confidence == 255);
-    assert(frame.data_ptr[0] == 1.0F);
-    assert(frame.data_ptr[3] == 4.0F);
+    ok &= check(frame.timestamp == 123456789ULL, "Frame timestamp assignment");
+    ok &= check(frame.data_ptr == buffer.data(), "Frame non-owning pointer");
+    ok &= check(frame.data_size == sizeof(buffer), "Frame data size");
+    ok &= check(frame.priority == 255, "255 is highest priority");
+    ok &= check(frame.confidence == 255, "255 is highest confidence");
+    ok &= check(frame.data_ptr[0] == 1.0F, "Frame first element");
+    ok &= check(frame.data_ptr[3] == 4.0F, "Frame last element");
 
     Event event;
     event.timestamp = frame.timestamp;
@@ -58,16 +71,21 @@ int main() {
     event.confidence = frame.confidence;
     event.metadata = "smoke-test";
 
-    assert(event.timestamp == frame.timestamp);
-    assert(event.event_type == EventType::FrameReady);
-    assert(event.associated_frame_id == 0);
-    assert(event.priority == kMaxPriority);
-    assert(event.confidence == kMaxConfidence);
-    assert(event.metadata == std::string("smoke-test"));
+    ok &= check(event.timestamp == frame.timestamp, "Event timestamp");
+    ok &= check(event.event_type == EventType::FrameReady, "Event type");
+    ok &= check(event.associated_frame_id == 0, "Event frame association default");
+    ok &= check(event.priority == kMaxPriority, "Event priority");
+    ok &= check(event.confidence == kMaxConfidence, "Event confidence");
+    ok &= check(event.metadata == std::string("smoke-test"), "Event metadata");
 
-    assert(!is_fatal(ErrorCode::None));
-    assert(!is_fatal(ErrorCode::InvalidFrame));
-    assert(is_fatal(ErrorCode::InternalError));
+    ok &= check(!is_fatal(ErrorCode::None), "None is recoverable");
+    ok &= check(!is_fatal(ErrorCode::InvalidFrame), "InvalidFrame is recoverable");
+    ok &= check(is_fatal(ErrorCode::InternalError), "InternalError is fatal");
 
+    if (!ok) {
+        return 1;
+    }
+
+    std::cout << "Common type smoke test passed.\n";
     return 0;
 }
