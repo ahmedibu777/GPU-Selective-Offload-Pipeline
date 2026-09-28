@@ -20,3 +20,9 @@ target_include_directories(recorder_simulator PRIVATE
 target_compile_options(recorder_simulator PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wpedantic>
 )
+
+include(CTest)
+
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
