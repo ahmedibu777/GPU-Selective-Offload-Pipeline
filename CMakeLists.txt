@@ -12,3 +12,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(recorder_simulator
     apps/recorder_simulator/main.cpp
 )
+
+target_include_directories(recorder_simulator PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+target_compile_options(recorder_simulator PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wpedantic>
+)
