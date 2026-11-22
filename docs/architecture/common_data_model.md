@@ -1,58 +1,20 @@
 # Common Data Model — Phase 1
 
-This document defines the shared semantic contract for the first C++ data
-model. Sensor and Recorder behavior are intentionally deferred.
+Hardware-independent C++17 schema contract for frames and events.
 
 ## Timestamp
+Frame and Event timestamps are uint64 microseconds since Unix epoch (UTC).
 
-All Frame::timestamp and Event::timestamp values are std::uint64_t
-microseconds since the Unix epoch (1970-01-01 00:00:00 UTC).
+## Frame
+Frame uses a sensor enum, three uint32 dimensions, byte payload pointer and byte size. The payload pointer is non-owning: the caller owns storage and must ensure the buffer outlives the Frame. No GPU-specific ownership is assumed.
 
-Components must not reinterpret the value as milliseconds, nanoseconds, or a
-different epoch.
+## Sensors
+Camera, Lidar, Radar, Imu, Gps.
 
-## Priority
+## Events
+FrameReady, ErrorOccurred, ProcessingComplete, NormalDriving, PedestrianDetected, CollisionLike, RareObject.
 
-priority is std::uint8_t in the inclusive range 0..255.
+Event confidence is a float; priority is uint8 (0 lowest/drop, 255 highest/immediate, default 128). Metadata is an owning string.
 
-- 0 = lowest priority
-- 255 = highest priority
-- 128 = default priority
-
-Future selector/scheduler logic must use larger values as higher priority.
-
-## Confidence
-
-confidence is std::uint8_t in the inclusive range 0..255.
-
-- 0 = lowest confidence
-- 255 = highest confidence
-- 0 = Phase 1 default
-
-## Frame memory ownership
-
-Frame::data_ptr is a non-owning view of an externally managed float buffer.
-The caller owns the allocation and lifetime. A Frame must not outlive the
-referenced buffer.
-
-No shared_ptr, vector, or GPU-specific ownership wrapper is introduced until
-the memory strategy for CPU, pinned-host, and device memory is finalized.
-
-## Event association and metadata
-
-Event::associated_frame_id == 0 means that no particular frame is associated
-with the event. Phase 1 does not assign an ID to Frame.
-
-Event::metadata is a simple owning std::string; it is intentionally kept small
-so later event-processing code can evolve without introducing a larger
-metadata framework.
-
-## Error semantics
-
-ErrorCode::InvalidFrame, InvalidEvent, BufferUnavailable, and UnsupportedSensor
-describe recoverable conditions.
-
-ErrorCode::InternalError represents a fatal/invariant condition.
-
-Exception classes and richer error-reporting infrastructure are deferred until
-actual operations require them.
+## Scope
+No CUDA, TensorRT, networking, database, or GPU dependencies are required for this Phase 1 model.
