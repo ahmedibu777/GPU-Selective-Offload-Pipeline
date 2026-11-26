@@ -1,0 +1,13 @@
+build/
+build-*/
+output/
+*.o
+*.obj
+*.exe
+*.out
+*.log
+.cache/
+.vscode/
+.idea/
+__pycache__/
+*.pyc
